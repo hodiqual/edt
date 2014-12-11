@@ -40,13 +40,13 @@ public class HttpUrlConnectionExample {
 	  private HostnameVerifier allHostsValid;
  
   public HttpUrlConnectionExample() throws Exception {
-		proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(InetAddress.getByName("webcache-enseignement.interne.enac"), 8888));
+		proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(InetAddress.getByName("*******"), 8888));
 	  //eleve-enac\hodiqual
 		 Authenticator authenticator = new Authenticator() {
 
 		        public PasswordAuthentication getPasswordAuthentication() {
-		            return (new PasswordAuthentication("eleve-enac\\hodiqual",
-		                    "Bafib0ul".toCharArray()));
+		            return (new PasswordAuthentication("eleve-enac\\****",
+		                    "*****".toCharArray()));
 		        }
 		    };
 		    Authenticator.setDefault(authenticator);
