@@ -10,7 +10,10 @@ import com.gargoylesoftware.htmlunit.WebClient;
 import com.gargoylesoftware.htmlunit.html.DomElement;
 import com.gargoylesoftware.htmlunit.html.DomNodeList;
 import com.gargoylesoftware.htmlunit.html.FrameWindow;
+import com.gargoylesoftware.htmlunit.html.HtmlElement;
 import com.gargoylesoftware.htmlunit.html.HtmlPage;
+import com.gargoylesoftware.htmlunit.html.HtmlTable;
+import com.gargoylesoftware.htmlunit.html.HtmlTableCell;
 
 public class WithHTMLUnit {
 
@@ -68,7 +71,7 @@ public class WithHTMLUnit {
 		
 
 		String urlSelectCalendar 	= "" + moustique + "custom/modules/plannings/imagemap.jsp?week=" + week + "&clearTree=false&reset=true&width=795&height=480";
-		HtmlPage calendarPage = webClient.getPage(urlSelectCalendar); //55,38,182,138
+		HtmlPage calendarPage = webClient.getPage(urlSelectCalendar);
 		System.out.println(calendarPage.getBody().asXml());
 		
 		DomNodeList<DomElement> list = calendarPage.getElementsByTagName("area");
@@ -98,9 +101,52 @@ public class WithHTMLUnit {
 				duree = 4;
 
 			System.out.println("\tduree: " + duree + "h");
-				
 			
 		}
+		
+		int eventId = 16496;
+		String urlEvent = "" + moustique + "custom/modules/plannings/eventInfo.jsp?week=-1&day=-1&slot=0&"
+				+ "eventId=" + eventId + "&activityId=-1&resourceId=-1&sessionId=-1&repetition=-1&order=slot&availableZone=-1";
+
+		
+		HtmlPage eventPage = webClient.getPage(urlEvent);
+		
+		System.out.println(eventPage.asXml());
+		
+
+		HtmlElement eventPageBody = eventPage.getBody();
+		for (HtmlElement bodyElement : eventPageBody.getHtmlElementDescendants()) {
+			if( bodyElement instanceof HtmlTable )
+			{
+				System.out.println(urlEvent);
+				System.out.println(bodyElement.asXml());
+				HtmlTable table = (HtmlTable) bodyElement;
+				table.getCellAt(1, 0);
+				HtmlTableCell cell = table.getCellAt(2, 0);
+				System.out.println(cell.asText());
+				cell = table.getCellAt(2, 1);
+				System.out.println(cell.asText());
+				cell = table.getCellAt(2, 2);
+				System.out.println(cell.asText());
+				cell = table.getCellAt(2, 3);
+				System.out.println(cell.asText());
+				cell = table.getCellAt(2, 4);
+				System.out.println(cell.asText());
+				cell = table.getCellAt(2, 5);
+				System.out.println(cell.asText());
+				cell = table.getCellAt(2, 6);
+				System.out.println(cell.asText());
+				cell = table.getCellAt(2, 7);
+				System.out.println(cell.asText());
+				cell = table.getCellAt(2, 8);
+				System.out.println(cell.asText());
+				
+			}
+		}
+		
+		
+		//System.out.println(table.asXml());
+		
 		 webClient.closeAllWindows();
 		 
 	}
