@@ -5,7 +5,9 @@ import java.util.Scanner;
 
 import com.gargoylesoftware.htmlunit.BrowserVersion;
 import com.gargoylesoftware.htmlunit.DefaultCredentialsProvider;
+import com.gargoylesoftware.htmlunit.IncorrectnessListener;
 import com.gargoylesoftware.htmlunit.ScriptResult;
+import com.gargoylesoftware.htmlunit.SilentCssErrorHandler;
 import com.gargoylesoftware.htmlunit.WebClient;
 import com.gargoylesoftware.htmlunit.html.DomElement;
 import com.gargoylesoftware.htmlunit.html.DomNodeList;
@@ -17,76 +19,117 @@ import com.gargoylesoftware.htmlunit.html.HtmlTableCell;
 
 public class WithHTMLUnit {
 
-	public WithHTMLUnit() {
-		// TODO Auto-generated constructor stub
-	}
+	final WebClient webClient = new WebClient();
+	final HtmlPage  mainPage;
+	HtmlPage  treePage;
+	final HtmlPage  pianoPage;
+	
+	final String moustique = "https://moustique2.interne.enac/ade/";
 
-	public static void main(String[] args) throws Exception {
-		
-	    //final WebClient webClient = new WebClient(BrowserVersion.FIREFOX_24, "*****", 8888);
-
-		
-		 final WebClient webClient = new WebClient();
-		 
+	public WithHTMLUnit() throws Exception  {
+	//final WebClient webClient = new WebClient(BrowserVersion.FIREFOX_24, "*****", 8888);
+		 webClient.setHTMLParserListener(null);
+		 webClient.setCssErrorHandler(new SilentCssErrorHandler());
 		 webClient.getOptions().setUseInsecureSSL(true);
+		 webClient.setIncorrectnessListener(new IncorrectnessListener()
+		 	{
+				@Override
+				public void notify(String arg0, Object arg1) {
+					//nothing
+				}
+		 		
+		 	});
 		 
 	    //set proxy username and password 
 	    //final DefaultCredentialsProvider credentialsProvider = (DefaultCredentialsProvider) webClient.getCredentialsProvider();
 	    //credentialsProvider.addCredentials("eleve-enac\\****", "*****");
 	    
-	   
-		 
-		 String moustique = "https://moustique2.interne.enac/ade/";
+		
 			String urlConnection 		= "" + moustique + "custom/modules/plannings/direct_planning.jsp?login=enseignant&password=&projectId=2";
 			
-		 HtmlPage mainPage = webClient.getPage(urlConnection);
+		 mainPage = webClient.getPage(urlConnection);
 		 
 		 //mainPage.executeJavaScript("javascriptcheck(2530,'true')");
-		 HtmlPage treePage = (HtmlPage) mainPage.getFrameByName("tree").getEnclosedPage();
+		 treePage = (HtmlPage) mainPage.getFrameByName("tree").getEnclosedPage();
 		 treePage = treePage.getAnchorByHref("javascript:openCategory('trainee')").click();
 		 //System.out.println(mainPage1.getBody().asXml());		 
 		 treePage = treePage.getAnchorByHref("javascript:openBranch(1405)").click();
 		 treePage = treePage.getAnchorByHref("javascript:openBranch(2861)").click();
 		 treePage = treePage.getAnchorByHref("javascript:openBranch(2529)").click();
 		 treePage = treePage.getAnchorByHref("javascript:check(2530, 'false');").click();
-		 System.out.println(treePage.getBody().asXml());
+		 //System.out.println(treePage.getBody().asXml());
 		 
 		 
-		 HtmlPage pianoPage = (HtmlPage) mainPage.getFrameByName("pianoWeeks").getEnclosedPage();
-		// pianoPage = pianoPage.getAnchorByName("w16").click();
+		 pianoPage = (HtmlPage) mainPage.getFrameByName("pianoWeeks").getEnclosedPage();
+	}
+	
+	@Override
+	protected void finalize() throws Throwable {
+		super.finalize();
+		webClient.closeAllWindows();
+	}
+	
+	
+	
+	private HtmlPage getEventCalendarPage(int weekId) throws Exception  
+	{
+		 ScriptResult resultPiano = pianoPage.executeJavaScript("push("+weekId+",'true')");
+		 resultPiano.getNewPage();	
 		 
-		/*ScriptResult resultTree = treePage.executeJavaScript("check(2530,'true')");
-		resultTree.getNewPage();*/
-		 
-		 int week = 16;
-		 
-		 ScriptResult resultPiano = pianoPage.executeJavaScript("push("+week+",'true')");
-		 resultPiano.getNewPage();
+		String urlSelectCalendar 	= "" + moustique + "custom/modules/plannings/imagemap.jsp?week=" + weekId + "&clearTree=false&reset=true&width=795&height=480";
+		return webClient.getPage(urlSelectCalendar);
+	}
+	
+	private void getEventDetails(int eventId) throws Exception
+	{
+	
+		String urlEvent = "" + moustique + "custom/modules/plannings/eventInfo.jsp?week=-1&day=-1&slot=0&"
+				+ "eventId=" + eventId + "&activityId=-1&resourceId=-1&sessionId=-1&repetition=-1&order=slot&availableZone=-1";
 
-		 //String urlSelectPromo 		= "" + moustique + "standard/gui/tree.jsp?selectId=2530&reset=true&forceLoad=false&scroll=0";
-		 //webClient.getPage(urlSelectPromo);
-		 //String urlSelectWeek  		= "" + moustique + "custom/modules/plannings/bounds.jsp?clearTree=false&week=15&reset=true";
-		 //webClient.getPage(urlSelectWeek);		
-		 
 		
+		HtmlPage eventPage = webClient.getPage(urlEvent);
+		
+		//System.out.println(eventPage.asXml());
 
-		String urlSelectCalendar 	= "" + moustique + "custom/modules/plannings/imagemap.jsp?week=" + week + "&clearTree=false&reset=true&width=795&height=480";
-		HtmlPage calendarPage = webClient.getPage(urlSelectCalendar);
-		System.out.println(calendarPage.getBody().asXml());
+		HtmlElement eventPageBody = eventPage.getBody();
+		for (HtmlElement bodyElement : eventPageBody.getHtmlElementDescendants()) {
+			if( bodyElement instanceof HtmlTable )
+			{
+				//System.out.println(urlEvent);
+				//System.out.println(bodyElement.asXml());
+				HtmlTable table = (HtmlTable) bodyElement;
+				System.out.println("\t" + table.getCellAt(2, 0).asText());
+				System.out.println("\t" + table.getCellAt(2, 1).asText());
+				System.out.println("\t" + table.getCellAt(2, 2).asText());
+				System.out.println("\t" + table.getCellAt(2, 3).asText());
+				System.out.println("\t" + table.getCellAt(2, 4).asText());
+				System.out.println("\t" + table.getCellAt(2, 5).asText());
+				System.out.println("\t" + table.getCellAt(2, 6).asText());
+				System.out.println("\t" + table.getCellAt(2, 7).asText());
+				System.out.println("\t" + table.getCellAt(2, 8).asText());
+				
+			}
+		}
 		
-		DomNodeList<DomElement> list = calendarPage.getElementsByTagName("area");
+	}
+	
+	public void getEventsByWeek(int weekId) throws Exception{
+		DomNodeList<DomElement> list = getEventCalendarPage(weekId).getElementsByTagName("area");
 		for (DomElement domElement : list) {
-			System.out.println("EXTRACT: " + domElement.getAttribute("href"));
+			//System.out.println("EXTRACT: " + domElement.getAttribute("href"));
 			Scanner scanId = new Scanner(domElement.getAttribute("href"));
 			scanId.useDelimiter(",");
 			scanId.next();scanId.next();scanId.next();
-			System.out.println("Id: " + scanId.nextInt());
-			//System.out.println("EXTRACT: " + domElement.getAttribute("coords"));
+			int eventId = scanId.nextInt();
+			scanId.close();
+			
 			Scanner scanCoords = new Scanner(domElement.getAttribute("coords"));
 			scanCoords.useDelimiter(",");
 			int xmin = scanCoords.nextInt(); 
 			scanCoords.nextInt();
 			int xmax = scanCoords.nextInt(); 
+			scanCoords.close();
+			
 			int delta = xmax-xmin;
 			int TailleHeure = 64;
 			int err = 5;
@@ -98,57 +141,32 @@ public class WithHTMLUnit {
 			else if( 3*TailleHeure-err < delta && delta < 3*TailleHeure+err )
 				duree = 3;
 			else if( 4*TailleHeure-err < delta && delta < 4*TailleHeure+err )
-				duree = 4;
-
-			System.out.println("\tduree: " + duree + "h");
-			
+				duree = 4;		
+							
+			System.out.println("\n\nWeekId: " + weekId + " Id: " + eventId + " duree: " + duree + "h");
+			getEventDetails(eventId);
 		}
-		
-		int eventId = 16496;
-		String urlEvent = "" + moustique + "custom/modules/plannings/eventInfo.jsp?week=-1&day=-1&slot=0&"
-				+ "eventId=" + eventId + "&activityId=-1&resourceId=-1&sessionId=-1&repetition=-1&order=slot&availableZone=-1";
+	}
+	
+	
+	
 
+	public static void main(String[] args) throws Exception {
+	
+   		WithHTMLUnit controller = new WithHTMLUnit();
+		controller.getEventsByWeek(16); 
 		
-		HtmlPage eventPage = webClient.getPage(urlEvent);
-		
-		System.out.println(eventPage.asXml());
-		
+		controller.getEventsByWeek(17);
+		controller.getEventsByWeek(18);
 
-		HtmlElement eventPageBody = eventPage.getBody();
-		for (HtmlElement bodyElement : eventPageBody.getHtmlElementDescendants()) {
-			if( bodyElement instanceof HtmlTable )
-			{
-				System.out.println(urlEvent);
-				System.out.println(bodyElement.asXml());
-				HtmlTable table = (HtmlTable) bodyElement;
-				table.getCellAt(1, 0);
-				HtmlTableCell cell = table.getCellAt(2, 0);
-				System.out.println(cell.asText());
-				cell = table.getCellAt(2, 1);
-				System.out.println(cell.asText());
-				cell = table.getCellAt(2, 2);
-				System.out.println(cell.asText());
-				cell = table.getCellAt(2, 3);
-				System.out.println(cell.asText());
-				cell = table.getCellAt(2, 4);
-				System.out.println(cell.asText());
-				cell = table.getCellAt(2, 5);
-				System.out.println(cell.asText());
-				cell = table.getCellAt(2, 6);
-				System.out.println(cell.asText());
-				cell = table.getCellAt(2, 7);
-				System.out.println(cell.asText());
-				cell = table.getCellAt(2, 8);
-				System.out.println(cell.asText());
-				
-			}
-		}
-		
-		
-		//System.out.println(table.asXml());
-		
-		 webClient.closeAllWindows();
+		// pianoPage = pianoPage.getAnchorByName("w16").click();
 		 
+		/*ScriptResult resultTree = treePage.executeJavaScript("check(2530,'true')");
+		resultTree.getNewPage();*/
+
+		 
+
+				 
 	}
 
 }
