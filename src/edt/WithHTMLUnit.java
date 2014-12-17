@@ -60,7 +60,7 @@ public class WithHTMLUnit {
 		 //System.out.println(treePage.getBody().asXml());
 		 
 		 
-		 pianoPage = (HtmlPage) mainPage.getFrameByName("pianoWeeks").getEnclosedPage();
+		 pianoPage = (HtmlPage) mainPage.getFrameByName("pianoWeeks").getEnclosedPage();		 
 	}
 	
 	@Override
@@ -73,10 +73,13 @@ public class WithHTMLUnit {
 	
 	private HtmlPage getEventCalendarPage(int weekId) throws Exception  
 	{
+		System.out.println("ICCCCCCCCCCCCCCCCCIIIIIIIIIIIIIIIIIIIIIIII");
 		 ScriptResult resultPiano = pianoPage.executeJavaScript("push("+weekId+",'true')");
 		 resultPiano.getNewPage();	
+			System.out.println("OU LLLLLLLLAAAAAAAAAAAAAAAAAAAAAAAALLLLLLLLAAAAAAAAAA");
 		 
 		String urlSelectCalendar 	= "" + moustique + "custom/modules/plannings/imagemap.jsp?week=" + weekId + "&clearTree=false&reset=true&width=795&height=480";
+		System.out.println("urlSelectCalendar");
 		return webClient.getPage(urlSelectCalendar);
 	}
 	
@@ -115,6 +118,7 @@ public class WithHTMLUnit {
 	
 	public void getEventsByWeek(int weekId) throws Exception{
 		DomNodeList<DomElement> list = getEventCalendarPage(weekId).getElementsByTagName("area");
+		System.out.println("getEventsByWeek");
 		for (DomElement domElement : list) {
 			//System.out.println("EXTRACT: " + domElement.getAttribute("href"));
 			Scanner scanId = new Scanner(domElement.getAttribute("href"));
@@ -155,7 +159,6 @@ public class WithHTMLUnit {
 	
    		WithHTMLUnit controller = new WithHTMLUnit();
 		controller.getEventsByWeek(16); 
-		
 		controller.getEventsByWeek(17);
 		controller.getEventsByWeek(18);
 
